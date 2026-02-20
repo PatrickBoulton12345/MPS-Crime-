@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MPS Crime Dashboard | Metropolitan Police Service</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>MPS crime dashboard | looking for growth</title>
+    <!-- DM Sans (brand body font). Octarine (brand headline font) requires self-hosting. -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900;1,9..40,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
@@ -15,26 +16,36 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --navy: #0a1628;
-            --navy-light: #132039;
-            --blue: #2563eb;
-            --blue-light: #3b82f6;
-            --blue-pale: #dbeafe;
-            --bg: #f1f5f9;
+            /* LFG Brand Palette */
+            --black: #000000;
+            --orange: #FE5500;
+            --orange-dark: #cc4400;
+            --orange-pale: #fff1eb;
+            --yellow: #EE9944;
+            --yellow-pale: #fdf3e0;
+            --blue: #79CAC4;
+            --blue-dark: #5aada6;
+            --blue-pale: #e4f3f1;
+            --cream: #EBE3D0;
+            --cream-dark: #d9d0bb;
+
+            /* Semantic tokens */
+            --bg: #EBE3D0;
             --card: #ffffff;
-            --text: #0f172a;
-            --text-secondary: #64748b;
-            --text-muted: #94a3b8;
-            --border: #e2e8f0;
-            --green: #10b981;
-            --red: #ef4444;
-            --radius: 12px;
+            --text: #000000;
+            --text-secondary: #4a4a4a;
+            --text-muted: #7a7a7a;
+            --border: #d9d0bb;
+            --accent: #FE5500;
+            --positive: #79CAC4;
+            --negative: #FE5500;
+            --radius: 10px;
             --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 8px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.5;
@@ -43,14 +54,23 @@
 
         /* ===== HEADER ===== */
         .header {
-            background: var(--navy);
+            background: var(--black);
             color: white;
             padding: 0;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
+
+        /* Brand motif strip — progressing bars */
+        .brand-motif {
+            display: flex;
+            height: 5px;
+        }
+        .brand-motif .m-orange { flex: 5; background: var(--orange); }
+        .brand-motif .m-yellow { flex: 3; background: var(--yellow); }
+        .brand-motif .m-blue   { flex: 4; background: var(--blue); }
+        .brand-motif .m-cream  { flex: 2; background: var(--cream); }
 
         .header-inner {
             max-width: 1400px;
@@ -71,27 +91,29 @@
         .header-badge {
             width: 42px;
             height: 42px;
-            background: var(--blue);
-            border-radius: 10px;
+            background: var(--orange);
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            font-weight: 800;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 0.05em;
             flex-shrink: 0;
         }
 
         .header-title {
-            font-size: 18px;
-            font-weight: 700;
+            font-size: 20px;
+            font-weight: 900;
             letter-spacing: -0.02em;
+            /* Brand: lowercase headlines */
         }
 
         .header-subtitle {
             font-size: 12px;
-            color: #94a3b8;
+            color: var(--blue);
             font-weight: 400;
-            margin-top: 1px;
+            margin-top: 2px;
         }
 
         .header-live {
@@ -99,13 +121,13 @@
             align-items: center;
             gap: 8px;
             font-size: 12px;
-            color: #94a3b8;
+            color: var(--cream);
         }
 
         .header-live-dot {
             width: 8px;
             height: 8px;
-            background: var(--green);
+            background: var(--blue);
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
@@ -147,7 +169,7 @@
 
         .control-select {
             appearance: none;
-            background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E") no-repeat right 10px center;
+            background: var(--cream) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a4a4a' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E") no-repeat right 10px center;
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 8px 32px 8px 12px;
@@ -160,8 +182,8 @@
             transition: border-color 0.15s, box-shadow 0.15s;
         }
 
-        .control-select:hover { border-color: var(--blue-light); }
-        .control-select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-pale); }
+        .control-select:hover { border-color: var(--orange); }
+        .control-select:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-pale); }
 
         .controls-right {
             margin-left: auto;
@@ -174,19 +196,19 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            background: var(--blue);
+            background: var(--orange);
             color: white;
             border: none;
             border-radius: 8px;
             padding: 8px 16px;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
             font-family: inherit;
             cursor: pointer;
             transition: background 0.15s;
         }
 
-        .btn-refresh:hover { background: #1d4ed8; }
+        .btn-refresh:hover { background: var(--orange-dark); }
         .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-refresh svg { width: 14px; height: 14px; }
 
@@ -223,26 +245,26 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
+            height: 4px;
         }
 
-        .stat-card.card-total::before { background: var(--blue); }
-        .stat-card.card-violent::before { background: #dc2626; }
-        .stat-card.card-theft::before { background: #f59e0b; }
-        .stat-card.card-asb::before { background: #8b5cf6; }
+        .stat-card.card-total::before   { background: var(--orange); }
+        .stat-card.card-violent::before  { background: var(--black); }
+        .stat-card.card-theft::before    { background: var(--yellow); }
+        .stat-card.card-asb::before      { background: var(--blue); }
 
         .stat-label {
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.02em;
             margin-bottom: 8px;
+            /* Brand: sentence case, no all-caps */
         }
 
         .stat-value {
             font-size: 32px;
-            font-weight: 800;
+            font-weight: 900;
             letter-spacing: -0.03em;
             color: var(--text);
             line-height: 1;
@@ -259,9 +281,9 @@
             border-radius: 20px;
         }
 
-        .stat-change.up { background: #fef2f2; color: #dc2626; }
-        .stat-change.down { background: #f0fdf4; color: #16a34a; }
-        .stat-change.neutral { background: #f8fafc; color: var(--text-secondary); }
+        .stat-change.up   { background: var(--orange-pale); color: var(--orange); }
+        .stat-change.down  { background: var(--blue-pale); color: var(--blue-dark); }
+        .stat-change.neutral { background: var(--cream); color: var(--text-secondary); }
 
         /* ===== CHARTS ===== */
         .charts-grid {
@@ -286,16 +308,17 @@
         }
 
         .card-title {
-            font-size: 15px;
-            font-weight: 700;
+            font-size: 16px;
+            font-weight: 900;
             color: var(--text);
+            /* Brand: lowercase headlines */
         }
 
         .card-badge {
             font-size: 11px;
             font-weight: 600;
             color: var(--text-secondary);
-            background: var(--bg);
+            background: var(--cream);
             padding: 3px 10px;
             border-radius: 20px;
         }
@@ -322,13 +345,13 @@
         }
 
         .leaflet-popup-content-wrapper {
-            border-radius: 10px !important;
+            border-radius: 8px !important;
             box-shadow: var(--shadow-md) !important;
         }
 
         .leaflet-popup-content {
             margin: 12px 16px !important;
-            font-family: 'Inter', sans-serif !important;
+            font-family: 'DM Sans', sans-serif !important;
             font-size: 13px !important;
             line-height: 1.5 !important;
         }
@@ -351,6 +374,35 @@
             font-style: italic;
         }
 
+        /* Override marker cluster colours to brand */
+        .marker-cluster-small {
+            background-color: rgba(121, 202, 196, 0.4) !important;
+        }
+        .marker-cluster-small div {
+            background-color: rgba(121, 202, 196, 0.7) !important;
+            color: #000 !important;
+            font-family: 'DM Sans', sans-serif !important;
+            font-weight: 700 !important;
+        }
+        .marker-cluster-medium {
+            background-color: rgba(238, 153, 68, 0.4) !important;
+        }
+        .marker-cluster-medium div {
+            background-color: rgba(238, 153, 68, 0.7) !important;
+            color: #000 !important;
+            font-family: 'DM Sans', sans-serif !important;
+            font-weight: 700 !important;
+        }
+        .marker-cluster-large {
+            background-color: rgba(254, 85, 0, 0.4) !important;
+        }
+        .marker-cluster-large div {
+            background-color: rgba(254, 85, 0, 0.7) !important;
+            color: #fff !important;
+            font-family: 'DM Sans', sans-serif !important;
+            font-weight: 700 !important;
+        }
+
         /* ===== TABLE ===== */
         .table-controls {
             display: flex;
@@ -362,7 +414,7 @@
 
         .table-search {
             appearance: none;
-            background: var(--bg);
+            background: var(--cream);
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 8px 12px;
@@ -373,7 +425,7 @@
             transition: border-color 0.15s, box-shadow 0.15s;
         }
 
-        .table-search:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-pale); }
+        .table-search:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-pale); }
 
         .table-count {
             font-size: 13px;
@@ -394,11 +446,10 @@
         thead th {
             text-align: left;
             padding: 10px 14px;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-secondary);
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            font-size: 12px;
+            letter-spacing: 0.01em;
             border-bottom: 2px solid var(--border);
             white-space: nowrap;
             cursor: pointer;
@@ -406,14 +457,14 @@
             transition: color 0.15s;
         }
 
-        thead th:hover { color: var(--blue); }
+        thead th:hover { color: var(--orange); }
 
         tbody tr {
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--cream);
             transition: background 0.1s;
         }
 
-        tbody tr:hover { background: #f8fafc; }
+        tbody tr:hover { background: var(--cream); }
 
         tbody td {
             padding: 10px 14px;
@@ -438,7 +489,7 @@
         }
 
         .page-btn {
-            background: var(--bg);
+            background: var(--cream);
             border: 1px solid var(--border);
             border-radius: 6px;
             padding: 6px 12px;
@@ -449,15 +500,20 @@
             transition: all 0.15s;
         }
 
-        .page-btn:hover { background: var(--blue-pale); color: var(--blue); border-color: var(--blue); }
-        .page-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+        .page-btn:hover { background: var(--orange-pale); color: var(--orange); border-color: var(--orange); }
+        .page-btn.active { background: var(--orange); color: white; border-color: var(--orange); }
         .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
         /* ===== FOOTER ===== */
         .footer {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 0 24px 32px;
+            padding: 8px 24px 32px;
+        }
+
+        .footer-inner {
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
             text-align: center;
         }
 
@@ -468,11 +524,20 @@
         }
 
         .footer-text a {
-            color: var(--blue-light);
+            color: var(--orange);
             text-decoration: none;
+            font-weight: 500;
         }
 
         .footer-text a:hover { text-decoration: underline; }
+
+        .footer-brand {
+            margin-top: 12px;
+            font-size: 13px;
+            font-weight: 900;
+            color: var(--text);
+            letter-spacing: -0.02em;
+        }
 
         /* ===== LOADING ===== */
         .loading-overlay {
@@ -495,7 +560,7 @@
             width: 32px;
             height: 32px;
             border: 3px solid var(--border);
-            border-top-color: var(--blue);
+            border-top-color: var(--orange);
             border-radius: 50%;
             animation: spin 0.7s linear infinite;
         }
@@ -508,7 +573,7 @@
             left: 0;
             right: 0;
             height: 3px;
-            background: var(--blue);
+            background: var(--orange);
             z-index: 9999;
             transform: scaleX(0);
             transform-origin: left;
@@ -520,7 +585,7 @@
 
         /* ===== ERROR ===== */
         .error-banner {
-            background: #fef2f2;
+            background: var(--orange-pale);
             border: 1px solid #fecaca;
             border-radius: var(--radius);
             padding: 16px 20px;
@@ -531,18 +596,18 @@
 
         .error-banner.visible { display: flex; }
 
-        .error-banner svg { flex-shrink: 0; color: var(--red); }
+        .error-banner svg { flex-shrink: 0; color: var(--orange); }
 
         .error-banner p {
             font-size: 13px;
-            color: #991b1b;
+            color: var(--orange-dark);
             flex: 1;
         }
 
         .error-dismiss {
             background: none;
             border: none;
-            color: #991b1b;
+            color: var(--orange-dark);
             cursor: pointer;
             font-size: 18px;
             line-height: 1;
@@ -584,14 +649,21 @@
         <div class="header-brand">
             <div class="header-badge">MPS</div>
             <div>
-                <div class="header-title">Crime Dashboard</div>
-                <div class="header-subtitle">Metropolitan Police Service &middot; London</div>
+                <div class="header-title">crime dashboard</div>
+                <div class="header-subtitle">metropolitan police service &middot; london</div>
             </div>
         </div>
         <div class="header-live">
             <span class="header-live-dot"></span>
-            <span>Live data from <strong>data.police.uk</strong></span>
+            <span>live data from <strong>data.police.uk</strong></span>
         </div>
+    </div>
+    <!-- LFG brand motif -->
+    <div class="brand-motif">
+        <div class="m-orange"></div>
+        <div class="m-yellow"></div>
+        <div class="m-blue"></div>
+        <div class="m-cream"></div>
     </div>
 </header>
 
@@ -625,37 +697,37 @@
         <button class="error-dismiss" onclick="hideError()">&times;</button>
     </div>
 
-    <!-- Stat Cards -->
+    <!-- Stat cards — Brand: sentence case labels -->
     <div class="stats-grid">
         <div class="stat-card card-total" style="position:relative">
             <div class="loading-overlay" id="loadStats"><div class="spinner"></div></div>
-            <div class="stat-label">Total Crimes</div>
+            <div class="stat-label">Total crimes</div>
             <div class="stat-value" id="statTotal">--</div>
             <span class="stat-change neutral" id="statTotalChange">--</span>
         </div>
         <div class="stat-card card-violent">
-            <div class="stat-label">Violence &amp; Sexual Offences</div>
+            <div class="stat-label">Violence &amp; sexual offences</div>
             <div class="stat-value" id="statViolent">--</div>
             <span class="stat-change neutral" id="statViolentChange">--</span>
         </div>
         <div class="stat-card card-theft">
-            <div class="stat-label">Theft Offences</div>
+            <div class="stat-label">Theft offences</div>
             <div class="stat-value" id="statTheft">--</div>
             <span class="stat-change neutral" id="statTheftChange">--</span>
         </div>
         <div class="stat-card card-asb">
-            <div class="stat-label">Anti-Social Behaviour</div>
+            <div class="stat-label">Anti-social behaviour</div>
             <div class="stat-value" id="statASB">--</div>
             <span class="stat-change neutral" id="statASBChange">--</span>
         </div>
     </div>
 
-    <!-- Charts -->
+    <!-- Charts — Brand: lowercase titles -->
     <div class="charts-grid">
         <div class="card" style="position:relative">
             <div class="loading-overlay" id="loadBar"><div class="spinner"></div></div>
             <div class="card-header">
-                <span class="card-title">Crimes by Category</span>
+                <span class="card-title">crimes by category</span>
                 <span class="card-badge" id="barBadge">--</span>
             </div>
             <div class="card-body">
@@ -667,8 +739,8 @@
         <div class="card" style="position:relative">
             <div class="loading-overlay" id="loadLine"><div class="spinner"></div></div>
             <div class="card-header">
-                <span class="card-title">Monthly Trend</span>
-                <span class="card-badge">Last 6 months</span>
+                <span class="card-title">monthly trend</span>
+                <span class="card-badge">last 6 months</span>
             </div>
             <div class="card-body">
                 <div class="chart-container line-chart">
@@ -682,7 +754,7 @@
     <div class="card map-card" style="position:relative">
         <div class="loading-overlay" id="loadMap"><div class="spinner"></div></div>
         <div class="card-header">
-            <span class="card-title">Crime Locations</span>
+            <span class="card-title">crime locations</span>
             <span class="card-badge" id="mapBadge">1-mile radius of borough centre</span>
         </div>
         <div class="card-body">
@@ -694,7 +766,7 @@
     <div class="card" style="position:relative">
         <div class="loading-overlay" id="loadTable"><div class="spinner"></div></div>
         <div class="card-header">
-            <span class="card-title">Crime Records</span>
+            <span class="card-title">crime records</span>
         </div>
         <div class="card-body">
             <div class="table-controls">
@@ -722,11 +794,14 @@
 
 <!-- Footer -->
 <footer class="footer">
-    <p class="footer-text">
-        Data sourced from <a href="https://data.police.uk" target="_blank" rel="noopener">data.police.uk</a> &middot;
-        Covers crimes within 1 mile of borough centre &middot; Updated monthly<br>
-        Contains public sector information licensed under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank" rel="noopener">Open Government Licence v3.0</a>
-    </p>
+    <div class="footer-inner">
+        <p class="footer-text">
+            Data sourced from <a href="https://data.police.uk" target="_blank" rel="noopener">data.police.uk</a> &middot;
+            Covers crimes within 1 mile of borough centre &middot; Updated monthly<br>
+            Contains public sector information licensed under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank" rel="noopener">Open Government Licence v3.0</a>
+        </p>
+        <div class="footer-brand">lookingforgrowth.uk</div>
+    </div>
 </footer>
 
 <script>
@@ -734,6 +809,7 @@
 // CONFIGURATION
 // ===================================================================
 const API_BASE = 'https://data.police.uk/api';
+const FONT_FAMILY = "'DM Sans', sans-serif";
 
 const BOROUGHS = [
     { name: 'Barking and Dagenham', lat: 51.5607, lng: 0.1557 },
@@ -770,38 +846,39 @@ const BOROUGHS = [
     { name: 'Westminster', lat: 51.4975, lng: -0.1357 }
 ].sort((a, b) => a.name.localeCompare(b.name));
 
+// Chart colours derived from LFG brand palette
 const CATEGORY_COLORS = {
-    'anti-social-behaviour': { bg: '#f3e8ff', text: '#7c3aed', chart: '#8b5cf6' },
-    'bicycle-theft':         { bg: '#e0f2fe', text: '#0369a1', chart: '#06b6d4' },
-    'burglary':              { bg: '#fef3c7', text: '#b45309', chart: '#f59e0b' },
-    'criminal-damage-arson': { bg: '#fee2e2', text: '#dc2626', chart: '#ef4444' },
-    'drugs':                 { bg: '#d1fae5', text: '#047857', chart: '#10b981' },
-    'other-theft':           { bg: '#e0e7ff', text: '#4338ca', chart: '#6366f1' },
-    'possession-of-weapons': { bg: '#ffe4e6', text: '#be123c', chart: '#f43f5e' },
-    'public-order':          { bg: '#ffedd5', text: '#c2410c', chart: '#f97316' },
-    'robbery':               { bg: '#fce7f3', text: '#be185d', chart: '#ec4899' },
-    'shoplifting':           { bg: '#ccfbf1', text: '#0f766e', chart: '#14b8a6' },
-    'theft-from-the-person': { bg: '#ede9fe', text: '#6d28d9', chart: '#a78bfa' },
-    'vehicle-crime':         { bg: '#dbeafe', text: '#1d4ed8', chart: '#3b82f6' },
-    'violent-crime':         { bg: '#fecdd3', text: '#9f1239', chart: '#e11d48' },
-    'other-crime':           { bg: '#f1f5f9', text: '#475569', chart: '#94a3b8' }
+    'violent-crime':         { bg: '#fff1eb', text: '#cc4400', chart: '#FE5500' },
+    'anti-social-behaviour': { bg: '#e4f3f1', text: '#3d8a80', chart: '#79CAC4' },
+    'burglary':              { bg: '#fdf3e0', text: '#b87a28', chart: '#EE9944' },
+    'other-theft':           { bg: '#f0f0f0', text: '#333333', chart: '#444444' },
+    'vehicle-crime':         { bg: '#fff5ee', text: '#d45500', chart: '#E06820' },
+    'shoplifting':           { bg: '#ddf0ed', text: '#3d8880', chart: '#5DADA3' },
+    'criminal-damage-arson': { bg: '#fef8ec', text: '#a07020', chart: '#D4952E' },
+    'public-order':          { bg: '#ffe8d8', text: '#b04000', chart: '#CC5522' },
+    'drugs':                 { bg: '#e8e8e8', text: '#555555', chart: '#666666' },
+    'robbery':               { bg: '#fff4ee', text: '#c04800', chart: '#FF7733' },
+    'theft-from-the-person': { bg: '#d0ebe7', text: '#2d7a70', chart: '#3D9A90' },
+    'bicycle-theft':         { bg: '#fdf6e6', text: '#a08030', chart: '#C89848' },
+    'possession-of-weapons': { bg: '#f2e8e4', text: '#8a5040', chart: '#A06050' },
+    'other-crime':           { bg: '#ebebeb', text: '#888888', chart: '#999999' }
 };
 
 const CATEGORY_LABELS = {
-    'anti-social-behaviour': 'Anti-social Behaviour',
-    'bicycle-theft': 'Bicycle Theft',
+    'anti-social-behaviour': 'Anti-social behaviour',
+    'bicycle-theft': 'Bicycle theft',
     'burglary': 'Burglary',
-    'criminal-damage-arson': 'Criminal Damage & Arson',
+    'criminal-damage-arson': 'Criminal damage & arson',
     'drugs': 'Drugs',
-    'other-theft': 'Other Theft',
-    'possession-of-weapons': 'Possession of Weapons',
-    'public-order': 'Public Order',
+    'other-theft': 'Other theft',
+    'possession-of-weapons': 'Possession of weapons',
+    'public-order': 'Public order',
     'robbery': 'Robbery',
     'shoplifting': 'Shoplifting',
-    'theft-from-the-person': 'Theft from Person',
-    'vehicle-crime': 'Vehicle Crime',
-    'violent-crime': 'Violence & Sexual Offences',
-    'other-crime': 'Other Crime'
+    'theft-from-the-person': 'Theft from person',
+    'vehicle-crime': 'Vehicle crime',
+    'violent-crime': 'Violence & sexual offences',
+    'other-crime': 'Other crime'
 };
 
 const ROWS_PER_PAGE = 20;
@@ -1005,11 +1082,11 @@ function renderCategoryChart(crimes) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#0f172a',
-                    titleFont: { family: 'Inter', weight: '600' },
-                    bodyFont: { family: 'Inter' },
+                    backgroundColor: '#000000',
+                    titleFont: { family: FONT_FAMILY, weight: '600' },
+                    bodyFont: { family: FONT_FAMILY },
                     padding: 10,
-                    cornerRadius: 8,
+                    cornerRadius: 6,
                     callbacks: {
                         label: ctx => ` ${ctx.parsed.x.toLocaleString()} crimes`
                     }
@@ -1017,12 +1094,12 @@ function renderCategoryChart(crimes) {
             },
             scales: {
                 x: {
-                    grid: { color: '#f1f5f9' },
-                    ticks: { font: { family: 'Inter', size: 11 } }
+                    grid: { color: '#EBE3D0' },
+                    ticks: { font: { family: FONT_FAMILY, size: 11 } }
                 },
                 y: {
                     grid: { display: false },
-                    ticks: { font: { family: 'Inter', size: 11, weight: '500' } }
+                    ticks: { font: { family: FONT_FAMILY, size: 11, weight: '500' } }
                 }
             }
         }
@@ -1033,7 +1110,6 @@ function renderCategoryChart(crimes) {
 // TREND CHART
 // ===================================================================
 function renderTrendChart(trendData) {
-    // trendData = { '2024-06': crimes[], '2024-07': crimes[], ... }
     const dates = Object.keys(trendData).sort();
     const labels = dates.map(formatMonth);
     const totals = dates.map(d => trendData[d].length);
@@ -1046,19 +1122,21 @@ function renderTrendChart(trendData) {
         {
             label: 'Total',
             data: totals,
-            borderColor: '#2563eb',
-            backgroundColor: 'rgba(37, 99, 235, 0.08)',
+            borderColor: '#FE5500',
+            backgroundColor: 'rgba(254, 85, 0, 0.06)',
             fill: true,
             tension: 0.35,
             borderWidth: 2.5,
             pointRadius: 4,
             pointHoverRadius: 6,
-            pointBackgroundColor: '#2563eb'
+            pointBackgroundColor: '#FE5500'
         }
     ];
 
+    const trendLineColors = ['#79CAC4', '#EE9944', '#000000'];
+    let colorIdx = 0;
     for (const [cat] of top3) {
-        const color = (CATEGORY_COLORS[cat] || CATEGORY_COLORS['other-crime']).chart;
+        const color = trendLineColors[colorIdx++] || '#999';
         datasets.push({
             label: CATEGORY_LABELS[cat] || cat,
             data: dates.map(d => {
@@ -1089,18 +1167,18 @@ function renderTrendChart(trendData) {
                 legend: {
                     position: 'bottom',
                     labels: {
-                        font: { family: 'Inter', size: 11 },
+                        font: { family: FONT_FAMILY, size: 11 },
                         usePointStyle: true,
                         pointStyle: 'circle',
                         padding: 16
                     }
                 },
                 tooltip: {
-                    backgroundColor: '#0f172a',
-                    titleFont: { family: 'Inter', weight: '600' },
-                    bodyFont: { family: 'Inter' },
+                    backgroundColor: '#000000',
+                    titleFont: { family: FONT_FAMILY, weight: '600' },
+                    bodyFont: { family: FONT_FAMILY },
                     padding: 10,
-                    cornerRadius: 8,
+                    cornerRadius: 6,
                     callbacks: {
                         label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`
                     }
@@ -1108,12 +1186,12 @@ function renderTrendChart(trendData) {
             },
             scales: {
                 x: {
-                    grid: { color: '#f1f5f9' },
-                    ticks: { font: { family: 'Inter', size: 11 } }
+                    grid: { color: '#EBE3D0' },
+                    ticks: { font: { family: FONT_FAMILY, size: 11 } }
                 },
                 y: {
-                    grid: { color: '#f1f5f9' },
-                    ticks: { font: { family: 'Inter', size: 11 } },
+                    grid: { color: '#EBE3D0' },
+                    ticks: { font: { family: FONT_FAMILY, size: 11 } },
                     beginAtZero: true
                 }
             }
@@ -1160,7 +1238,6 @@ function updateMap(crimes, borough) {
     markerCluster.clearLayers();
     leafletMap.setView([borough.lat, borough.lng], 14);
 
-    // Limit markers to prevent browser slowdown
     const maxMarkers = 2000;
     const displayCrimes = crimes.slice(0, maxMarkers);
 
@@ -1208,7 +1285,6 @@ function getFilteredData() {
             (c.outcome_status?.category || '').toLowerCase().includes(q)
         );
     }
-    // Sort
     data.sort((a, b) => {
         let va, vb;
         switch (tableSort.col) {
@@ -1249,7 +1325,6 @@ function renderTable() {
         </tr>`;
     }).join('');
 
-    // Pagination
     const pagDiv = document.getElementById('tablePagination');
     if (totalPages <= 1) { pagDiv.innerHTML = ''; return; }
 
@@ -1305,29 +1380,23 @@ async function loadAllData() {
     document.getElementById('refreshBtn').disabled = true;
 
     try {
-        // Find the index of selected date to get previous months for trend
         const dateIdx = availableDates.findIndex(d => d.date === date);
         const trendDates = availableDates.slice(dateIdx, dateIdx + 6).map(d => d.date).reverse();
 
-        // Fetch all months in parallel
         const results = await Promise.all(
             trendDates.map(d => fetchCrimes(borough.lat, borough.lng, d))
         );
 
-        // Build trend data
         const trendData = {};
         for (let i = 0; i < trendDates.length; i++) {
             trendData[trendDates[i]] = results[i];
         }
 
-        // Current month data
         currentData = trendData[date] || [];
 
-        // Previous month data for comparison
         const prevDate = trendDates.length >= 2 ? trendDates[trendDates.length - 2] : null;
         const prevData = prevDate ? trendData[prevDate] : null;
 
-        // Update all sections
         updateStats(currentData, prevData);
         hideLoading(['loadStats']);
 
@@ -1360,7 +1429,6 @@ async function loadAllData() {
 // INITIALIZATION
 // ===================================================================
 async function init() {
-    // Populate borough selector
     const boroughSelect = document.getElementById('boroughSelect');
     BOROUGHS.forEach((b, i) => {
         const opt = document.createElement('option');
@@ -1370,7 +1438,6 @@ async function init() {
         boroughSelect.appendChild(opt);
     });
 
-    // Fetch available dates
     try {
         const dates = await fetchAvailableDates();
         availableDates = dates;
@@ -1387,18 +1454,14 @@ async function init() {
         return;
     }
 
-    // Init map
     initMap();
 
-    // Event listeners
     document.getElementById('boroughSelect').addEventListener('change', loadAllData);
     document.getElementById('dateSelect').addEventListener('change', loadAllData);
 
-    // Load data
     await loadAllData();
 }
 
-// Go
 document.addEventListener('DOMContentLoaded', init);
 </script>
 
