@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPS Crime Dashboard | Metropolitan Police Service</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --navy: #0a1628;
+            --navy-light: #132039;
+            --blue: #2563eb;
+            --blue-light: #3b82f6;
+            --blue-pale: #dbeafe;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --green: #10b981;
+            --red: #ef4444;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: var(--navy);
+            color: white;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-badge {
+            width: 42px;
+            height: 42px;
+            background: var(--blue);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .header-subtitle {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 400;
+            margin-top: 1px;
+        }
+
+        .header-live {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .header-live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ===== CONTROLS ===== */
+        .controls {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 0;
+        }
+
+        .controls-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .control-select {
+            appearance: none;
+            background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E") no-repeat right 10px center;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 32px 8px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            font-weight: 500;
+            color: var(--text);
+            cursor: pointer;
+            min-width: 180px;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .control-select:hover { border-color: var(--blue-light); }
+        .control-select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-pale); }
+
+        .controls-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-refresh {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-refresh:hover { background: #1d4ed8; }
+        .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-refresh svg { width: 14px; height: 14px; }
+
+        /* ===== MAIN LAYOUT ===== */
+        .main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ===== STAT CARDS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .stat-card.card-total::before { background: var(--blue); }
+        .stat-card.card-violent::before { background: #dc2626; }
+        .stat-card.card-theft::before { background: #f59e0b; }
+        .stat-card.card-asb::before { background: #8b5cf6; }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--text);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+
+        .stat-change.up { background: #fef2f2; color: #dc2626; }
+        .stat-change.down { background: #f0fdf4; color: #16a34a; }
+        .stat-change.neutral { background: #f8fafc; color: var(--text-secondary); }
+
+        /* ===== CHARTS ===== */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 18px 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .card-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: var(--bg);
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .card-body {
+            padding: 16px 20px 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .chart-container.bar-chart { height: 360px; }
+        .chart-container.line-chart { height: 360px; }
+
+        /* ===== MAP ===== */
+        .map-card .card-body { padding: 0; }
+
+        #crime-map {
+            width: 100%;
+            height: 450px;
+            border-radius: 0 0 var(--radius) var(--radius);
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 10px !important;
+            box-shadow: var(--shadow-md) !important;
+        }
+
+        .leaflet-popup-content {
+            margin: 12px 16px !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 13px !important;
+            line-height: 1.5 !important;
+        }
+
+        .popup-category {
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .popup-location {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .popup-outcome {
+            margin-top: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* ===== TABLE ===== */
+        .table-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .table-search {
+            appearance: none;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text);
+            width: 240px;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .table-search:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-pale); }
+
+        .table-count {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 10px 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.15s;
+        }
+
+        thead th:hover { color: var(--blue); }
+
+        tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.1s;
+        }
+
+        tbody tr:hover { background: #f8fafc; }
+
+        tbody td {
+            padding: 10px 14px;
+            color: var(--text);
+        }
+
+        .category-pill {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .table-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .page-btn {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .page-btn:hover { background: var(--blue-pale); color: var(--blue); border-color: var(--blue); }
+        .page-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px 32px;
+            text-align: center;
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        .footer-text a {
+            color: var(--blue-light);
+            text-decoration: none;
+        }
+
+        .footer-text a:hover { text-decoration: underline; }
+
+        /* ===== LOADING ===== */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius);
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .loading-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--blue);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .global-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--blue);
+            z-index: 9999;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s;
+        }
+
+        .global-loading.active { transform: scaleX(0.7); transition: transform 8s ease-out; }
+        .global-loading.done { transform: scaleX(1); transition: transform 0.3s; }
+
+        /* ===== ERROR ===== */
+        .error-banner {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .error-banner.visible { display: flex; }
+
+        .error-banner svg { flex-shrink: 0; color: var(--red); }
+
+        .error-banner p {
+            font-size: 13px;
+            color: #991b1b;
+            flex: 1;
+        }
+
+        .error-dismiss {
+            background: none;
+            border: none;
+            color: #991b1b;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            padding: 4px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .header-inner { flex-direction: column; align-items: flex-start; }
+            .controls-inner { flex-direction: column; align-items: stretch; }
+            .controls-right { margin-left: 0; }
+            .control-select { width: 100%; min-width: 0; }
+            .stat-value { font-size: 26px; }
+            .table-search { width: 100%; }
+            #crime-map { height: 320px; }
+        }
+
+        @media (max-width: 480px) {
+            .main { padding: 16px; gap: 16px; }
+            .stats-grid { gap: 10px; }
+            .stat-card { padding: 14px; }
+            .stat-value { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Global loading bar -->
+<div class="global-loading" id="globalLoading"></div>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-inner">
+        <div class="header-brand">
+            <div class="header-badge">MPS</div>
+            <div>
+                <div class="header-title">Crime Dashboard</div>
+                <div class="header-subtitle">Metropolitan Police Service &middot; London</div>
+            </div>
+        </div>
+        <div class="header-live">
+            <span class="header-live-dot"></span>
+            <span>Live data from <strong>data.police.uk</strong></span>
+        </div>
+    </div>
+</header>
+
+<!-- Controls -->
+<div class="controls">
+    <div class="controls-inner">
+        <div class="control-group">
+            <label for="boroughSelect">Borough</label>
+            <select id="boroughSelect" class="control-select"></select>
+        </div>
+        <div class="control-group">
+            <label for="dateSelect">Month</label>
+            <select id="dateSelect" class="control-select"></select>
+        </div>
+        <div class="controls-right">
+            <button class="btn-refresh" id="refreshBtn" onclick="loadAllData()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Main -->
+<main class="main">
+
+    <!-- Error banner -->
+    <div class="error-banner" id="errorBanner">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p id="errorText">An error occurred while fetching data.</p>
+        <button class="error-dismiss" onclick="hideError()">&times;</button>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+        <div class="stat-card card-total" style="position:relative">
+            <div class="loading-overlay" id="loadStats"><div class="spinner"></div></div>
+            <div class="stat-label">Total Crimes</div>
+            <div class="stat-value" id="statTotal">--</div>
+            <span class="stat-change neutral" id="statTotalChange">--</span>
+        </div>
+        <div class="stat-card card-violent">
+            <div class="stat-label">Violence &amp; Sexual Offences</div>
+            <div class="stat-value" id="statViolent">--</div>
+            <span class="stat-change neutral" id="statViolentChange">--</span>
+        </div>
+        <div class="stat-card card-theft">
+            <div class="stat-label">Theft Offences</div>
+            <div class="stat-value" id="statTheft">--</div>
+            <span class="stat-change neutral" id="statTheftChange">--</span>
+        </div>
+        <div class="stat-card card-asb">
+            <div class="stat-label">Anti-Social Behaviour</div>
+            <div class="stat-value" id="statASB">--</div>
+            <span class="stat-change neutral" id="statASBChange">--</span>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+        <div class="card" style="position:relative">
+            <div class="loading-overlay" id="loadBar"><div class="spinner"></div></div>
+            <div class="card-header">
+                <span class="card-title">Crimes by Category</span>
+                <span class="card-badge" id="barBadge">--</span>
+            </div>
+            <div class="card-body">
+                <div class="chart-container bar-chart">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="card" style="position:relative">
+            <div class="loading-overlay" id="loadLine"><div class="spinner"></div></div>
+            <div class="card-header">
+                <span class="card-title">Monthly Trend</span>
+                <span class="card-badge">Last 6 months</span>
+            </div>
+            <div class="card-body">
+                <div class="chart-container line-chart">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map -->
+    <div class="card map-card" style="position:relative">
+        <div class="loading-overlay" id="loadMap"><div class="spinner"></div></div>
+        <div class="card-header">
+            <span class="card-title">Crime Locations</span>
+            <span class="card-badge" id="mapBadge">1-mile radius of borough centre</span>
+        </div>
+        <div class="card-body">
+            <div id="crime-map"></div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card" style="position:relative">
+        <div class="loading-overlay" id="loadTable"><div class="spinner"></div></div>
+        <div class="card-header">
+            <span class="card-title">Crime Records</span>
+        </div>
+        <div class="card-body">
+            <div class="table-controls">
+                <input type="text" class="table-search" id="tableSearch" placeholder="Search crimes..." oninput="filterTable()">
+                <span class="table-count" id="tableCount">--</span>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('category')">Category</th>
+                            <th onclick="sortTable('location')">Location</th>
+                            <th onclick="sortTable('outcome')">Outcome</th>
+                            <th onclick="sortTable('id')">Crime ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="crimeTableBody"></tbody>
+                </table>
+            </div>
+            <div class="table-pagination" id="tablePagination"></div>
+        </div>
+    </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+    <p class="footer-text">
+        Data sourced from <a href="https://data.police.uk" target="_blank" rel="noopener">data.police.uk</a> &middot;
+        Covers crimes within 1 mile of borough centre &middot; Updated monthly<br>
+        Contains public sector information licensed under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank" rel="noopener">Open Government Licence v3.0</a>
+    </p>
+</footer>
+
+<script>
+// ===================================================================
+// CONFIGURATION
+// ===================================================================
+const API_BASE = 'https://data.police.uk/api';
+
+const BOROUGHS = [
+    { name: 'Barking and Dagenham', lat: 51.5607, lng: 0.1557 },
+    { name: 'Barnet', lat: 51.6252, lng: -0.1517 },
+    { name: 'Bexley', lat: 51.4549, lng: 0.1505 },
+    { name: 'Brent', lat: 51.5588, lng: -0.2817 },
+    { name: 'Bromley', lat: 51.4039, lng: 0.0198 },
+    { name: 'Camden', lat: 51.5290, lng: -0.1255 },
+    { name: 'Croydon', lat: 51.3762, lng: -0.0982 },
+    { name: 'Ealing', lat: 51.5130, lng: -0.3089 },
+    { name: 'Enfield', lat: 51.6538, lng: -0.0799 },
+    { name: 'Greenwich', lat: 51.4892, lng: 0.0648 },
+    { name: 'Hackney', lat: 51.5450, lng: -0.0553 },
+    { name: 'Hammersmith and Fulham', lat: 51.4927, lng: -0.2339 },
+    { name: 'Haringey', lat: 51.6000, lng: -0.1119 },
+    { name: 'Harrow', lat: 51.5898, lng: -0.3346 },
+    { name: 'Havering', lat: 51.5812, lng: 0.1837 },
+    { name: 'Hillingdon', lat: 51.5441, lng: -0.4760 },
+    { name: 'Hounslow', lat: 51.4746, lng: -0.3680 },
+    { name: 'Islington', lat: 51.5465, lng: -0.1058 },
+    { name: 'Kensington and Chelsea', lat: 51.5020, lng: -0.1947 },
+    { name: 'Kingston upon Thames', lat: 51.4085, lng: -0.3064 },
+    { name: 'Lambeth', lat: 51.4571, lng: -0.1231 },
+    { name: 'Lewisham', lat: 51.4415, lng: -0.0117 },
+    { name: 'Merton', lat: 51.4098, lng: -0.1949 },
+    { name: 'Newham', lat: 51.5077, lng: 0.0469 },
+    { name: 'Redbridge', lat: 51.5590, lng: 0.0741 },
+    { name: 'Richmond upon Thames', lat: 51.4613, lng: -0.3037 },
+    { name: 'Southwark', lat: 51.5035, lng: -0.0804 },
+    { name: 'Sutton', lat: 51.3618, lng: -0.1945 },
+    { name: 'Tower Hamlets', lat: 51.5203, lng: -0.0293 },
+    { name: 'Waltham Forest', lat: 51.5886, lng: -0.0118 },
+    { name: 'Wandsworth', lat: 51.4567, lng: -0.1910 },
+    { name: 'Westminster', lat: 51.4975, lng: -0.1357 }
+].sort((a, b) => a.name.localeCompare(b.name));
+
+const CATEGORY_COLORS = {
+    'anti-social-behaviour': { bg: '#f3e8ff', text: '#7c3aed', chart: '#8b5cf6' },
+    'bicycle-theft':         { bg: '#e0f2fe', text: '#0369a1', chart: '#06b6d4' },
+    'burglary':              { bg: '#fef3c7', text: '#b45309', chart: '#f59e0b' },
+    'criminal-damage-arson': { bg: '#fee2e2', text: '#dc2626', chart: '#ef4444' },
+    'drugs':                 { bg: '#d1fae5', text: '#047857', chart: '#10b981' },
+    'other-theft':           { bg: '#e0e7ff', text: '#4338ca', chart: '#6366f1' },
+    'possession-of-weapons': { bg: '#ffe4e6', text: '#be123c', chart: '#f43f5e' },
+    'public-order':          { bg: '#ffedd5', text: '#c2410c', chart: '#f97316' },
+    'robbery':               { bg: '#fce7f3', text: '#be185d', chart: '#ec4899' },
+    'shoplifting':           { bg: '#ccfbf1', text: '#0f766e', chart: '#14b8a6' },
+    'theft-from-the-person': { bg: '#ede9fe', text: '#6d28d9', chart: '#a78bfa' },
+    'vehicle-crime':         { bg: '#dbeafe', text: '#1d4ed8', chart: '#3b82f6' },
+    'violent-crime':         { bg: '#fecdd3', text: '#9f1239', chart: '#e11d48' },
+    'other-crime':           { bg: '#f1f5f9', text: '#475569', chart: '#94a3b8' }
+};
+
+const CATEGORY_LABELS = {
+    'anti-social-behaviour': 'Anti-social Behaviour',
+    'bicycle-theft': 'Bicycle Theft',
+    'burglary': 'Burglary',
+    'criminal-damage-arson': 'Criminal Damage & Arson',
+    'drugs': 'Drugs',
+    'other-theft': 'Other Theft',
+    'possession-of-weapons': 'Possession of Weapons',
+    'public-order': 'Public Order',
+    'robbery': 'Robbery',
+    'shoplifting': 'Shoplifting',
+    'theft-from-the-person': 'Theft from Person',
+    'vehicle-crime': 'Vehicle Crime',
+    'violent-crime': 'Violence & Sexual Offences',
+    'other-crime': 'Other Crime'
+};
+
+const ROWS_PER_PAGE = 20;
+
+// ===================================================================
+// STATE
+// ===================================================================
+let availableDates = [];
+let currentData = [];
+let trendCounts = {};
+let previousMonthCount = null;
+let previousViolent = null;
+let previousTheft = null;
+let previousASB = null;
+let tablePage = 1;
+let tableSort = { col: 'category', dir: 'asc' };
+let tableFilter = '';
+
+// Cache
+const cache = {};
+function cacheKey(lat, lng, date) { return `${lat.toFixed(4)},${lng.toFixed(4)},${date}`; }
+
+// Charts & Map
+let categoryChart = null;
+let trendChart = null;
+let leafletMap = null;
+let markerCluster = null;
+
+// ===================================================================
+// API
+// ===================================================================
+async function apiFetch(url) {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`API returned ${resp.status}`);
+    return resp.json();
+}
+
+async function fetchCrimes(lat, lng, date) {
+    const key = cacheKey(lat, lng, date);
+    if (cache[key]) return cache[key];
+    const data = await apiFetch(`${API_BASE}/crimes-street/all-crime?lat=${lat}&lng=${lng}&date=${date}`);
+    cache[key] = data;
+    return data;
+}
+
+async function fetchAvailableDates() {
+    return apiFetch(`${API_BASE}/crimes-street-dates`);
+}
+
+// ===================================================================
+// HELPERS
+// ===================================================================
+function getSelectedBorough() {
+    const idx = document.getElementById('boroughSelect').value;
+    return BOROUGHS[idx];
+}
+
+function getSelectedDate() {
+    return document.getElementById('dateSelect').value;
+}
+
+function countByCategory(crimes) {
+    const counts = {};
+    for (const c of crimes) {
+        const cat = c.category;
+        counts[cat] = (counts[cat] || 0) + 1;
+    }
+    return counts;
+}
+
+function formatMonth(dateStr) {
+    const [y, m] = dateStr.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${months[parseInt(m)-1]} ${y}`;
+}
+
+function animateValue(el, end, duration = 600) {
+    const start = parseInt(el.textContent.replace(/,/g, '')) || 0;
+    if (isNaN(end)) { el.textContent = '--'; return; }
+    const range = end - start;
+    if (range === 0) { el.textContent = end.toLocaleString(); return; }
+    const startTime = performance.now();
+    function update(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(start + range * eased).toLocaleString();
+        if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+}
+
+function setChange(el, current, previous) {
+    if (previous === null || previous === 0) {
+        el.className = 'stat-change neutral';
+        el.textContent = 'No prior data';
+        return;
+    }
+    const pct = ((current - previous) / previous * 100).toFixed(1);
+    if (current > previous) {
+        el.className = 'stat-change up';
+        el.innerHTML = `&#9650; ${Math.abs(pct)}% vs prev month`;
+    } else if (current < previous) {
+        el.className = 'stat-change down';
+        el.innerHTML = `&#9660; ${Math.abs(pct)}% vs prev month`;
+    } else {
+        el.className = 'stat-change neutral';
+        el.textContent = 'No change';
+    }
+}
+
+function showLoading(ids) {
+    for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('active');
+    }
+}
+
+function hideLoading(ids) {
+    for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+    }
+}
+
+function showError(msg) {
+    document.getElementById('errorText').textContent = msg;
+    document.getElementById('errorBanner').classList.add('visible');
+}
+
+function hideError() {
+    document.getElementById('errorBanner').classList.remove('visible');
+}
+
+// ===================================================================
+// STATS
+// ===================================================================
+function updateStats(crimes, prevCrimes) {
+    const total = crimes.length;
+    const counts = countByCategory(crimes);
+    const violent = counts['violent-crime'] || 0;
+    const theft = (counts['other-theft'] || 0) + (counts['bicycle-theft'] || 0) +
+                  (counts['shoplifting'] || 0) + (counts['theft-from-the-person'] || 0);
+    const asb = counts['anti-social-behaviour'] || 0;
+
+    animateValue(document.getElementById('statTotal'), total);
+    animateValue(document.getElementById('statViolent'), violent);
+    animateValue(document.getElementById('statTheft'), theft);
+    animateValue(document.getElementById('statASB'), asb);
+
+    if (prevCrimes) {
+        const prevCounts = countByCategory(prevCrimes);
+        const prevTotal = prevCrimes.length;
+        const prevViolent = prevCounts['violent-crime'] || 0;
+        const prevTheft = (prevCounts['other-theft'] || 0) + (prevCounts['bicycle-theft'] || 0) +
+                          (prevCounts['shoplifting'] || 0) + (prevCounts['theft-from-the-person'] || 0);
+        const prevASB = prevCounts['anti-social-behaviour'] || 0;
+        setChange(document.getElementById('statTotalChange'), total, prevTotal);
+        setChange(document.getElementById('statViolentChange'), violent, prevViolent);
+        setChange(document.getElementById('statTheftChange'), theft, prevTheft);
+        setChange(document.getElementById('statASBChange'), asb, prevASB);
+    } else {
+        for (const id of ['statTotalChange','statViolentChange','statTheftChange','statASBChange']) {
+            const el = document.getElementById(id);
+            el.className = 'stat-change neutral';
+            el.textContent = 'No prior data';
+        }
+    }
+}
+
+// ===================================================================
+// CATEGORY CHART
+// ===================================================================
+function renderCategoryChart(crimes) {
+    const counts = countByCategory(crimes);
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const labels = sorted.map(([cat]) => CATEGORY_LABELS[cat] || cat);
+    const values = sorted.map(([, v]) => v);
+    const colors = sorted.map(([cat]) => (CATEGORY_COLORS[cat] || CATEGORY_COLORS['other-crime']).chart);
+
+    document.getElementById('barBadge').textContent = `${crimes.length.toLocaleString()} total`;
+
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    if (categoryChart) categoryChart.destroy();
+    categoryChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                data: values,
+                backgroundColor: colors,
+                borderRadius: 4,
+                borderSkipped: false,
+                maxBarThickness: 28
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0f172a',
+                    titleFont: { family: 'Inter', weight: '600' },
+                    bodyFont: { family: 'Inter' },
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => ` ${ctx.parsed.x.toLocaleString()} crimes`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: '#f1f5f9' },
+                    ticks: { font: { family: 'Inter', size: 11 } }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { font: { family: 'Inter', size: 11, weight: '500' } }
+                }
+            }
+        }
+    });
+}
+
+// ===================================================================
+// TREND CHART
+// ===================================================================
+function renderTrendChart(trendData) {
+    // trendData = { '2024-06': crimes[], '2024-07': crimes[], ... }
+    const dates = Object.keys(trendData).sort();
+    const labels = dates.map(formatMonth);
+    const totals = dates.map(d => trendData[d].length);
+
+    // Top 3 categories from most recent month
+    const latestCounts = countByCategory(trendData[dates[dates.length - 1]]);
+    const top3 = Object.entries(latestCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+    const datasets = [
+        {
+            label: 'Total',
+            data: totals,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.08)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2.5,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#2563eb'
+        }
+    ];
+
+    for (const [cat] of top3) {
+        const color = (CATEGORY_COLORS[cat] || CATEGORY_COLORS['other-crime']).chart;
+        datasets.push({
+            label: CATEGORY_LABELS[cat] || cat,
+            data: dates.map(d => {
+                const c = countByCategory(trendData[d]);
+                return c[cat] || 0;
+            }),
+            borderColor: color,
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            borderDash: [4, 3],
+            tension: 0.35,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: color
+        });
+    }
+
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    if (trendChart) trendChart.destroy();
+    trendChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { family: 'Inter', size: 11 },
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 16
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#0f172a',
+                    titleFont: { family: 'Inter', weight: '600' },
+                    bodyFont: { family: 'Inter' },
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: '#f1f5f9' },
+                    ticks: { font: { family: 'Inter', size: 11 } }
+                },
+                y: {
+                    grid: { color: '#f1f5f9' },
+                    ticks: { font: { family: 'Inter', size: 11 } },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// ===================================================================
+// MAP
+// ===================================================================
+function initMap() {
+    leafletMap = L.map('crime-map', {
+        center: [51.5074, -0.1278],
+        zoom: 13,
+        zoomControl: true,
+        scrollWheelZoom: true
+    });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        maxZoom: 19
+    }).addTo(leafletMap);
+
+    markerCluster = L.markerClusterGroup({
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        iconCreateFunction: function(cluster) {
+            const count = cluster.getChildCount();
+            let size = 'small';
+            if (count > 100) size = 'large';
+            else if (count > 30) size = 'medium';
+            return L.divIcon({
+                html: `<div><span>${count}</span></div>`,
+                className: `marker-cluster marker-cluster-${size}`,
+                iconSize: L.point(40, 40)
+            });
+        }
+    });
+    leafletMap.addLayer(markerCluster);
+}
+
+function updateMap(crimes, borough) {
+    markerCluster.clearLayers();
+    leafletMap.setView([borough.lat, borough.lng], 14);
+
+    // Limit markers to prevent browser slowdown
+    const maxMarkers = 2000;
+    const displayCrimes = crimes.slice(0, maxMarkers);
+
+    for (const crime of displayCrimes) {
+        if (!crime.location || !crime.location.latitude) continue;
+        const lat = parseFloat(crime.location.latitude);
+        const lng = parseFloat(crime.location.longitude);
+        const cat = crime.category;
+        const color = (CATEGORY_COLORS[cat] || CATEGORY_COLORS['other-crime']).chart;
+
+        const marker = L.circleMarker([lat, lng], {
+            radius: 6,
+            fillColor: color,
+            color: '#fff',
+            weight: 1.5,
+            fillOpacity: 0.85
+        });
+
+        marker.bindPopup(`
+            <div class="popup-category">${CATEGORY_LABELS[cat] || cat}</div>
+            <div class="popup-location">${crime.location.street?.name || 'Unknown location'}</div>
+            ${crime.outcome_status ? `<div class="popup-outcome">${crime.outcome_status.category}</div>` : ''}
+        `);
+
+        markerCluster.addLayer(marker);
+    }
+
+    if (crimes.length > maxMarkers) {
+        document.getElementById('mapBadge').textContent = `Showing ${maxMarkers.toLocaleString()} of ${crimes.length.toLocaleString()} crimes`;
+    } else {
+        document.getElementById('mapBadge').textContent = `${crimes.length.toLocaleString()} crimes within 1 mile`;
+    }
+}
+
+// ===================================================================
+// TABLE
+// ===================================================================
+function getFilteredData() {
+    let data = [...currentData];
+    if (tableFilter) {
+        const q = tableFilter.toLowerCase();
+        data = data.filter(c =>
+            (CATEGORY_LABELS[c.category] || c.category).toLowerCase().includes(q) ||
+            (c.location?.street?.name || '').toLowerCase().includes(q) ||
+            (c.outcome_status?.category || '').toLowerCase().includes(q)
+        );
+    }
+    // Sort
+    data.sort((a, b) => {
+        let va, vb;
+        switch (tableSort.col) {
+            case 'category': va = a.category; vb = b.category; break;
+            case 'location': va = a.location?.street?.name || ''; vb = b.location?.street?.name || ''; break;
+            case 'outcome': va = a.outcome_status?.category || ''; vb = b.outcome_status?.category || ''; break;
+            case 'id': va = a.persistent_id || ''; vb = b.persistent_id || ''; break;
+            default: va = a.category; vb = b.category;
+        }
+        const cmp = va.localeCompare(vb);
+        return tableSort.dir === 'asc' ? cmp : -cmp;
+    });
+    return data;
+}
+
+function renderTable() {
+    const data = getFilteredData();
+    const totalPages = Math.ceil(data.length / ROWS_PER_PAGE);
+    if (tablePage > totalPages) tablePage = totalPages || 1;
+    const start = (tablePage - 1) * ROWS_PER_PAGE;
+    const page = data.slice(start, start + ROWS_PER_PAGE);
+
+    document.getElementById('tableCount').textContent = `${data.length.toLocaleString()} records`;
+
+    const tbody = document.getElementById('crimeTableBody');
+    tbody.innerHTML = page.map(c => {
+        const cat = c.category;
+        const colors = CATEGORY_COLORS[cat] || CATEGORY_COLORS['other-crime'];
+        const label = CATEGORY_LABELS[cat] || cat;
+        const location = c.location?.street?.name || 'Unknown';
+        const outcome = c.outcome_status?.category || 'Under investigation';
+        const shortId = (c.persistent_id || '').slice(0, 12) + '...';
+        return `<tr>
+            <td><span class="category-pill" style="background:${colors.bg};color:${colors.text}">${label}</span></td>
+            <td>${location}</td>
+            <td>${outcome}</td>
+            <td style="color:var(--text-muted);font-size:11px;font-family:monospace">${shortId}</td>
+        </tr>`;
+    }).join('');
+
+    // Pagination
+    const pagDiv = document.getElementById('tablePagination');
+    if (totalPages <= 1) { pagDiv.innerHTML = ''; return; }
+
+    let btns = '';
+    btns += `<button class="page-btn" ${tablePage === 1 ? 'disabled' : ''} onclick="goPage(${tablePage - 1})">Prev</button>`;
+    const windowSize = 5;
+    let pStart = Math.max(1, tablePage - 2);
+    let pEnd = Math.min(totalPages, pStart + windowSize - 1);
+    if (pEnd - pStart < windowSize - 1) pStart = Math.max(1, pEnd - windowSize + 1);
+    for (let i = pStart; i <= pEnd; i++) {
+        btns += `<button class="page-btn ${i === tablePage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+    }
+    btns += `<button class="page-btn" ${tablePage === totalPages ? 'disabled' : ''} onclick="goPage(${tablePage + 1})">Next</button>`;
+    pagDiv.innerHTML = btns;
+}
+
+function sortTable(col) {
+    if (tableSort.col === col) {
+        tableSort.dir = tableSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+        tableSort.col = col;
+        tableSort.dir = 'asc';
+    }
+    tablePage = 1;
+    renderTable();
+}
+
+function filterTable() {
+    tableFilter = document.getElementById('tableSearch').value;
+    tablePage = 1;
+    renderTable();
+}
+
+function goPage(p) {
+    tablePage = p;
+    renderTable();
+}
+
+// ===================================================================
+// MAIN DATA LOADING
+// ===================================================================
+async function loadAllData() {
+    const borough = getSelectedBorough();
+    const date = getSelectedDate();
+    if (!borough || !date) return;
+
+    hideError();
+    const gl = document.getElementById('globalLoading');
+    gl.classList.remove('done');
+    gl.classList.add('active');
+
+    showLoading(['loadStats', 'loadBar', 'loadLine', 'loadMap', 'loadTable']);
+    document.getElementById('refreshBtn').disabled = true;
+
+    try {
+        // Find the index of selected date to get previous months for trend
+        const dateIdx = availableDates.findIndex(d => d.date === date);
+        const trendDates = availableDates.slice(dateIdx, dateIdx + 6).map(d => d.date).reverse();
+
+        // Fetch all months in parallel
+        const results = await Promise.all(
+            trendDates.map(d => fetchCrimes(borough.lat, borough.lng, d))
+        );
+
+        // Build trend data
+        const trendData = {};
+        for (let i = 0; i < trendDates.length; i++) {
+            trendData[trendDates[i]] = results[i];
+        }
+
+        // Current month data
+        currentData = trendData[date] || [];
+
+        // Previous month data for comparison
+        const prevDate = trendDates.length >= 2 ? trendDates[trendDates.length - 2] : null;
+        const prevData = prevDate ? trendData[prevDate] : null;
+
+        // Update all sections
+        updateStats(currentData, prevData);
+        hideLoading(['loadStats']);
+
+        renderCategoryChart(currentData);
+        hideLoading(['loadBar']);
+
+        renderTrendChart(trendData);
+        hideLoading(['loadLine']);
+
+        updateMap(currentData, borough);
+        hideLoading(['loadMap']);
+
+        tablePage = 1;
+        renderTable();
+        hideLoading(['loadTable']);
+
+    } catch (err) {
+        console.error('Failed to load data:', err);
+        showError(`Failed to load crime data: ${err.message}. The data.police.uk API may be temporarily unavailable.`);
+        hideLoading(['loadStats', 'loadBar', 'loadLine', 'loadMap', 'loadTable']);
+    } finally {
+        document.getElementById('refreshBtn').disabled = false;
+        gl.classList.remove('active');
+        gl.classList.add('done');
+        setTimeout(() => gl.classList.remove('done'), 400);
+    }
+}
+
+// ===================================================================
+// INITIALIZATION
+// ===================================================================
+async function init() {
+    // Populate borough selector
+    const boroughSelect = document.getElementById('boroughSelect');
+    BOROUGHS.forEach((b, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = b.name;
+        if (b.name === 'Westminster') opt.selected = true;
+        boroughSelect.appendChild(opt);
+    });
+
+    // Fetch available dates
+    try {
+        const dates = await fetchAvailableDates();
+        availableDates = dates;
+        const dateSelect = document.getElementById('dateSelect');
+        dates.slice(0, 12).forEach((d, i) => {
+            const opt = document.createElement('option');
+            opt.value = d.date;
+            opt.textContent = formatMonth(d.date);
+            if (i === 0) opt.selected = true;
+            dateSelect.appendChild(opt);
+        });
+    } catch (err) {
+        showError('Failed to fetch available dates. Please try refreshing the page.');
+        return;
+    }
+
+    // Init map
+    initMap();
+
+    // Event listeners
+    document.getElementById('boroughSelect').addEventListener('change', loadAllData);
+    document.getElementById('dateSelect').addEventListener('change', loadAllData);
+
+    // Load data
+    await loadAllData();
+}
+
+// Go
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
